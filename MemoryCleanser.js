@@ -2,7 +2,7 @@ const fs = require("fs");
 const { Configuration, OpenAIApi } = require("openai");
 const path = require('path');
 require('dotenv').config();
-const PROCESS_CHUNKS = 5000;
+let PROCESS_CHUNKS = 5000;
 
 const openai = new OpenAIApi(
   new Configuration({
@@ -17,19 +17,61 @@ async function processFilesInDirectory(directory) {
   }
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function processFile(filePath) {
   const processedFilePath = filePath.replace(/\.txt$/, '_processed.txt');
+  if (!fs.existsSync(processedFilePath)) {
+    fs.writeFileSync(processedFilePath, '');
+    console.log(`Created empty file at ${processedFilePath} as it did not exist.`);
+  }
+
+  if (fs.readFileSync(processedFilePath, 'utf8').trim().length > 0) {
+    //fs.writeFileSync(processedFilePath, '');
+    //console.log(`Cleared content in ${processedFilePath} as it was not empty.`);
+  }
+
   const data = fs.readFileSync(filePath, 'utf8');
-  const cleanData = data.replace(/[^ -~]+/g, '').replace(/\n/g, ' '); // Removes non-ASCII characters
+  //#const cleanData = data.replace(/[^ -~]+/g, '').replace(/\n/g, ' ').replace(/\r/g, ' '); // Removes non-ASCII characters
+  const cleanData = data.replace(/[^ -~\n\r]+/g, '').replace(/[\n\r]+/g, ' ');
   let index = 0;
   //let originalContent = "";
-  let newContent = "";
+  let newContent = fs.readFileSync(processedFilePath, 'utf8');
   while (index < cleanData.length) {
       const chunk = cleanData.slice(index, Math.min(index + PROCESS_CHUNKS, cleanData.length));
       const numberOfChunks = Math.ceil(cleanData.length / PROCESS_CHUNKS);
 
       const previousContent = limitAndFormatContent(newContent, PROCESS_CHUNKS / 2);
-      newContent = await processChunkWithAi(filePath, chunk, numberOfChunks, index, previousContent);
+      let success = false;
+
+      if (index <= (244 * PROCESS_CHUNKS) && PROCESS_CHUNKS == 5000) {
+        console.log("Skipping chunk", index);
+        success = true;
+        index += PROCESS_CHUNKS;
+        continue;
+      }
+      PROCESS_CHUNKS = 9000;
+      
+
+      success = false;
+      let attempt = 0;
+      while (!success) {
+        try {
+            newContent = await processChunkWithAi(filePath, chunk, numberOfChunks, index, previousContent);
+            success = true;
+        } catch (e) {
+            console.log("Error trying to processChunkWithAi, trying again (attempt " + attempt + ") after 5 seconds");
+            sleep(5000);
+        }
+
+        attempt++;
+        if (attempt > 10 && !success) {
+            console.log("Failed to processChunkWithAi after 10 attempts, giving up");
+            break;
+        }
+      }
       fs.appendFileSync(processedFilePath, newContent);
       //originalContent += newContent;
       index += PROCESS_CHUNKS;
@@ -53,7 +95,7 @@ function limitAndFormatContent(content, maxLength) {
 
 async function processChunkWithAi(textFileName, chunkOfData, chunkSize, chunkNumber, previousContent) {
   const payload = {
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o",
       temperature: 0,
       messages: [
           {
@@ -74,8 +116,9 @@ async function processChunkWithAi(textFileName, chunkOfData, chunkSize, chunkNum
               ###
               ${JSON.stringify(chunkOfData)}
               ###
-              Desired Format: JSON with the key originalContent.
-              Example: { "originalContent":"This will contain the original content of the document, unchanged just edited to be more readable and AI friendly."}
+              Repond in plain text.
+              eg:
+              This will contain the original content of the document, unchanged just edited to be more readable and AI friendly.
               `,
           },
       ],
@@ -87,7 +130,7 @@ async function processChunkWithAi(textFileName, chunkOfData, chunkSize, chunkNum
   console.log(response.data.choices[0].message);
   let originalContent;
   try {
-      originalContent = (JSON.parse(response.data.choices[0].message.content))['originalContent'];
+      originalContent = response.data.choices[0].message.content;
   } catch (e) {
       console.log("Error in JSON Parse", e);
       originalContent = e.message + " " + e.type + " " + e.stack + " " + e.name + " " + e.cause;
