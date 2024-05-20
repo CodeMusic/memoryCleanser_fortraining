@@ -43,10 +43,12 @@ function limitAndFormatContent(content, maxLength) {
       return content;
   }
 
-  const halfLength = Math.floor(maxLength / 2);
-  const start = content.substring(0, halfLength);
-  const end = content.substring(content.length - halfLength);
-  return `${start}...${end}`;
+  //#const halfLength = Math.floor(maxLength / 2);
+  //#const start = content.substring(0, halfLength);
+  //#const end = content.substring(content.length - halfLength);
+  //#return `${start}...${end}`;
+  const end = content.substring(content.length - maxLength);
+  return `...${end}`;
 }
 
 async function processChunkWithAi(textFileName, chunkOfData, chunkSize, chunkNumber, previousContent) {
