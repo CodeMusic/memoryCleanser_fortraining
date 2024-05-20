@@ -29,7 +29,7 @@ async function processFile(filePath) {
       const numberOfChunks = Math.ceil(cleanData.length / PROCESS_CHUNKS);
 
       const previousContent = limitAndFormatContent(newContent, PROCESS_CHUNKS / 2);
-      newContent += await processChunkWithAi(filePath, chunk, numberOfChunks, index, previousContent);
+      newContent = await processChunkWithAi(filePath, chunk, numberOfChunks, index, previousContent);
       fs.appendFileSync(processedFilePath, newContent);
       //originalContent += newContent;
       index += PROCESS_CHUNKS;
