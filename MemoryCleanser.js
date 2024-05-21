@@ -2,7 +2,7 @@ const fs = require("fs");
 const { Configuration, OpenAIApi } = require("openai");
 const path = require('path');
 require('dotenv').config();
-let PROCESS_CHUNKS = 5000;
+let PROCESS_CHUNKS = 11000;
 
 const openai = new OpenAIApi(
   new Configuration({
@@ -11,7 +11,7 @@ const openai = new OpenAIApi(
 );
 
 async function processFilesInDirectory(directory) {
-  const files = fs.readdirSync(directory).filter(file => file.endsWith('.txt'));
+  const files = fs.readdirSync(directory).filter(file => file.endsWith('.txt') && !file.endsWith('_processed.txt'));
   for (const file of files) {
       await processFile(path.join(directory, file));
   }
@@ -45,7 +45,7 @@ async function processFile(filePath) {
 
       const previousContent = limitAndFormatContent(newContent, PROCESS_CHUNKS / 2);
       let success = false;
-
+/*
       if (index <= (244 * PROCESS_CHUNKS) && PROCESS_CHUNKS == 5000) {
         console.log("Skipping chunk", index);
         success = true;
@@ -53,7 +53,7 @@ async function processFile(filePath) {
         continue;
       }
       PROCESS_CHUNKS = 9000;
-      
+      */
 
       success = false;
       let attempt = 0;
