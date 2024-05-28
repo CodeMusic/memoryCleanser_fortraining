@@ -2,7 +2,7 @@ const fs = require("fs");
 const { Configuration, OpenAIApi } = require("openai");
 const path = require('path');
 require('dotenv').config();
-let PROCESS_CHUNKS = 11000;
+let PROCESS_CHUNKS = 91000;
 
 const openai = new OpenAIApi(
   new Configuration({
@@ -102,7 +102,8 @@ async function processChunkWithAi(textFileName, chunkOfData, chunkSize, chunkNum
               role: "system",
               content: `You are an editor who produces AI training material based on a provided chunk of text. 
                         You have only been given a chunk of the content, about ${chunkSize} characters; You want to remove anything unhelpful to the training of the AI, while trying to maintain the original content as much as possible.
-                        These are transcriptions of the original material, we are trying to describe the original content, not the transcription. The content result should be of similar length to the original content, and as unchanged as possible.` 
+                        These are transcriptions of the original material, we are trying to describe the original content, not the transcription. The content result should be of similar length to the original content, and as unchanged as possible.
+                        Remove non-standard characters, and replace dialog with a story paragraph. This material is for use as AI training.` 
           },
           {
               role: "assistant",

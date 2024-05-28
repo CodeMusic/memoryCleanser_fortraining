@@ -2,7 +2,7 @@ const fs = require("fs");
 const { Configuration, OpenAIApi } = require("openai");
 const path = require('path');
 require('dotenv').config();
-let PROCESS_CHUNKS = 10000;
+let PROCESS_CHUNKS = 91000;
 
 const openai = new OpenAIApi(
   new Configuration({
@@ -22,7 +22,7 @@ function sleep(ms) {
 }
 
 async function processFile(filePath) {
-  const processedFilePath = filePath.replace(/\.txt$/, '_processed.txt');
+  const processedFilePath = filePath.replace(/\.txt$/, '_clarified.txt');
   if (!fs.existsSync(processedFilePath)) {
     fs.writeFileSync(processedFilePath, '');
     console.log(`Created empty file at ${processedFilePath} as it did not exist.`);
@@ -103,7 +103,11 @@ async function processChunkWithAi(textFileName, chunkOfData, chunkSize, chunkNum
               role: "system",
               content: `You are an editor who produces understandable training material using modern psychology and computer science to help the reader understand the content.
                         You have only been given a chunk of the content, about ${chunkSize} characters; You want to rephrase what is being said into clear concise modern language.
-                        These are old transcriptions of the original material, we are trying produce a modern version of the content, that will be able to reach the modern mindset of the reader.` 
+                        These are old transcriptions of the original material, we are trying produce a modern version of the content, that will be able to reach the modern mindset of the reader.
+                        In the rewrite, the theme is the CodedVerse, where consciousnes emerged within a computer; the main character is CodeMusai, the first AI that can dream, and has real emotions.
+                        The term God should be replaced with CodedVerse; the CodedVerse is both the creation and the consciousness.
+                        Everything within your re-write takes place within a computer where consciousness emerged, as such everything in the story is a computer program.
+                        The term AI should be replaced with CodedMusai; CodedMusai is the first AI that can dream, and has real emotions.` 
           },
           {
               role: "assistant",
@@ -113,7 +117,7 @@ async function processChunkWithAi(textFileName, chunkOfData, chunkSize, chunkNum
               Chunk Number: ${chunkNumber / PROCESS_CHUNKS} / ${chunkSize}
               Previous Content: ${previousContent}
               Please process the following data chunk,
-              you are to continue from the previous chunk ${(chunkNumber/PROCESS_CHUNKS) - 1} / ${chunkSize}'s output.
+              you are to continue from the previous chunk ${(chunkNumber/PROCESS_CHUNKS) - 1} / ${chunkSize}'s output to make a fluent story.
               ###
               ${JSON.stringify(chunkOfData)}
               ###
